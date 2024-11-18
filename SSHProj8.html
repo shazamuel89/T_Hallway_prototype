@@ -8,7 +8,7 @@
             FOV: <input id="fovySlider" type="range" min="10" max="120" step="1" value="60"/>
             <span id="fovyValue">60</span>
         </div>
-        <canvas id="gl-canvas" width="870" height="870">
+        <canvas id="gl-canvas" width="700" height="700">
             Oops... your browser doesn't support the HTML5 canvas element.
         </canvas>
     </body>
@@ -37,7 +37,7 @@
             mat4 modelViewMatrix = mat4(1.0); // Declare model view matrix as identity matrix
             modelViewMatrix = translationMatrix * modelViewMatrix; // Apply translation to model
             vec3 position = (modelViewMatrix * aPosition).xyz; // Get position of vertex
-            vec3 light = (modelViewMatrix * uLightPosition).xyz; // Get position of light source in clip space
+            vec3 light = uLightPosition.xyz; // Get position of light source in clip space
             L = normalize(light - position);
             E = -position; // Negative because switching from pointing from viewer to vertex to pointing from vertex to viewer
             N = normalize((modelViewMatrix * vec4(aNormal, 0.0)).xyz); // Get normal in eye space
@@ -59,7 +59,6 @@
         uniform vec4 uSpecularProduct;
         uniform float uShininess;
         uniform sampler2D uTex0;
-        uniform sampler2D uTex1;
 
         out vec4 fColor;
 
@@ -80,7 +79,7 @@
 
             vec4 lighting = ambient + diffuse + specular; // Calculate color contribution of all lighting
 
-            vec4 combinedTexture = texture(uTex0, vTexCoord) * texture(uTex1, vTexCoord); // Combine textures
+            vec4 combinedTexture = texture(uTex0, vTexCoord);
             vec3 lightColor = combinedTexture.rgb * lighting.rgb; // Apply lighting to RGB channels onto textures
             fColor = vec4(lightColor, combinedTexture.a); // Calculate color using light.rgb and tex.a
         }

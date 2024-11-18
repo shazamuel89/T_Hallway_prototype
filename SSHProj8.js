@@ -70,55 +70,56 @@ var projectionMatrixLoc;
 
 // Light source
 var normalsArray = [];
-var originalLightPosition = vec4(0.0, 0.99, -5.0, 1.0); // Light source positioned to cast deep, stretched shadows
-var lightAmbient = vec4(0.5, 0.55, 0.4, 1.0); // Brighter, with a hint of greenish-yellow for a fluorescent effect
-var lightDiffuse = vec4(0.9, 0.95, 0.7, 1.0);  // High diffuse for well-lit surroundings with Backrooms tint
-var lightSpecular = vec4(0.2, 0.2, 0.15, 1.0); // Slight specular for subtle highlights on surfaces
+var originalLightPosition = vec4(0.0, 0.7, -3.0, 1.0); // Light source positioned to cast shadows
+var lightAmbient = vec4(0.1, 0.1, 0.05, 1.0); // Bit of greenish-yellow ambient light for an enclosed, fluorescent effect
+var lightDiffuse = vec4(0.9, 0.9, 0.7, 1.0);  // High diffuse for well-lit man-made surroundings 
+var lightSpecular = vec4(0.2, 0.2, 0.1, 1.0); // Slight specular for subtle highlights on surfaces
 // Material shading
 var materialAmbient = vec4(0.5, 0.5, 0.4, 1.0);   // Lightly toned material to reflect more ambient light
-var materialDiffuse = vec4(0.8, 0.8, 0.6, 1.0);   // Matched with the light color to maintain eerie uniformity
-var materialSpecular = vec4(0.3, 0.3, 0.2, 1.0);  // Modest specular reflection for a slightly worn effect
+var materialDiffuse = vec4(0.9, 0.9, 0.7, 1.0);   // Matched with the light color to maintain eerie uniformity
+var materialSpecular = vec4(0.2, 0.2, 0.1, 1.0);  // Modest specular reflection for a slightly worn effect
 var materialShininess = 30.0; // Moderate shininess for soft highlights, keeping the look slightly matte
 
 
-// Describes textures 0 and 1
+// Variables for texture images
 var texCoordsArray = [];
-var texSize = 256;
 var texture0;
+var texWidth = 1024;
+var texHeight = 1024;
+var stripeWidth = 12;
+var stripeSpacing = 52;
+// Wall texture image
+var image0 = new Uint8Array(4 * texWidth * texHeight);
+for (var y = 0; y < texHeight; y++) {
+    for (var x = 0; x < texWidth; x++) { // For each texel
+        // Yellowish wall paint with noise added for variation
+        var baseYellow = 240; // Light yellow defined in range of 0-255 for texture colors
+        var noise = Math.random() * 30 - 15; // Get noise variation from -15 (inclusive) to 15 (exclusive)
+        var yellow = Math.min(255, Math.max(0, baseYellow + noise)); // Add noise and clamp yellow value between 0-255 inclusive
 
-// Backrooms texture
-var image0 = new Uint8Array(4 * texSize * texSize);
-for (var i = 0; i < texSize; i++) {
-    for (var j = 0; j < texSize; j++) {
-        // Create a yellowish background color with slight variations
-        var baseYellow = 220;  // Base yellow color (light yellow)
-        var noise = Math.random() * 20 - 10;  // Small noise to add variation to the texture
-        var yellow = Math.min(255, Math.max(0, baseYellow + noise));  // Adjust yellow tone with noise
+        var red = yellow; // Red and green combine using value for yellow 
+        var green = yellow;
+        var blue = yellow * 0.7; // Less blue to get yellowish tint
 
-        // Add subtle patterning with small square tiles (like faded wallpaper)
-        var tileSize = 32; // Tile size for the wallpaper pattern
-        var tileX = Math.floor(i / tileSize);
-        var tileY = Math.floor(j / tileSize);
+        // Add small imperfections to simulate worn paint look
+        var imperfectionNoise = Math.random() * 20 - 10; // Noise between -10 (inclusive) and 10 (exclusive)
+        red = Math.min(255, Math.max(0, red + imperfectionNoise));
+        green = Math.min(255, Math.max(0, green + imperfectionNoise));
+        blue = Math.min(255, Math.max(0, blue + imperfectionNoise));
 
-        // Use a simple alternating pattern for the tiles (checkerboard effect)
-        var pattern = (tileX + tileY) % 2 === 0 ? yellow : yellow * 0.9;  // Subtle difference for tile borders
+        var onStripe = ((y % (stripeWidth + stripeSpacing)) < stripeWidth) ? true : false;
+        var stripeColor = [
+            173,
+            216,
+            230
+        ];
 
-        // Assign the pattern to the red, green, and blue channels to get the yellow wallpaper effect
-        var red = pattern;  // Yellowish tone (same value for red, green, and blue)
-        var green = pattern;
-        var blue = pattern * 0.5;  // A little less blue for the yellowish tint
-
-        // Adding small imperfections to simulate the worn wallpaper look
-        var imperfectionNoise = Math.random() * 10 - 5;  // Slight imperfections
-        red = Math.min(255, Math.max(0, red + imperfectionNoise));  // Apply imperfection to red channel
-        green = Math.min(255, Math.max(0, green + imperfectionNoise)); // Apply imperfection to green channel
-        blue = Math.min(255, Math.max(0, blue + imperfectionNoise)); // Apply imperfection to blue channel
-
-        // Assign the colors to the texture array
-        image0[4 * i * texSize + 4 * j] = red;  // Red channel
-        image0[4 * i * texSize + 4 * j + 1] = green;  // Green channel
-        image0[4 * i * texSize + 4 * j + 2] = blue;  // Blue channel
-        image0[4 * i * texSize + 4 * j + 3] = 255;  // Alpha channel (fully opaque)
+        // Assign colors to the texture array
+        var offset = (y * texWidth + x) * 4;
+        image0[offset + 0] = onStripe ? stripeColor[0] : red;
+        image0[offset + 1] = onStripe ? stripeColor[1] : green;
+        image0[offset + 2] = onStripe ? stripeColor[2] : blue;
+        image0[offset + 3] = 255; // Fully opaque since it is defining the paint color
     }
 }
 var texCoord = [
@@ -214,7 +215,7 @@ function updatePosition() {
 function configureTexture() {
     texture0 = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, texture0);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, texSize, texSize, 0, gl.RGBA, gl.UNSIGNED_BYTE, image0);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, texWidth, texHeight, 0, gl.RGBA, gl.UNSIGNED_BYTE, image0);
     gl.generateMipmap(gl.TEXTURE_2D);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
@@ -284,6 +285,7 @@ window.onload = function init() {
     gl.uniform1f(gl.getUniformLocation(program, "uShininess"), materialShininess);
 
     // Textures
+    // Send texture coordinates
     var tBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, tBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(texCoordsArray), gl.STATIC_DRAW);
@@ -291,9 +293,11 @@ window.onload = function init() {
     gl.vertexAttribPointer(texCoordLoc, 2, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(texCoordLoc);
     configureTexture();
+    // Send textures
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, texture0);
     gl.uniform1i(gl.getUniformLocation(program, "uTex0"), 0);
+
 
     render();
 }
