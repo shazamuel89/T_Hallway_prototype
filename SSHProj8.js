@@ -59,6 +59,7 @@ const keysPressed = {};
 var displacementXLoc;
 var displacementYLoc;
 var displacementZLoc;
+var rotation
 
 // Viewing
 var fovy = 60.0;
@@ -70,7 +71,7 @@ var projectionMatrixLoc;
 
 // Light source
 var normalsArray = [];
-var originalLightPosition = vec4(0.0, 0.7, -3.0, 1.0); // Light source positioned to cast shadows
+var originalLightPosition = vec4(0.0, 0.7, -5.0, 1.0); // Light source positioned to cast shadows
 var lightAmbient = vec4(0.1, 0.1, 0.05, 1.0); // Bit of greenish-yellow ambient light for an enclosed, fluorescent effect
 var lightDiffuse = vec4(0.9, 0.9, 0.7, 1.0);  // High diffuse for well-lit man-made surroundings 
 var lightSpecular = vec4(0.2, 0.2, 0.1, 1.0); // Slight specular for subtle highlights on surfaces
@@ -155,11 +156,11 @@ function T_Hallway()
     quad(10, 26, 27, 11);
     quad(11, 27, 28, 12);
     quad(12, 28, 29, 13);
-    quad( 1,  3, 19, 17);
-    quad( 9, 15, 31, 25);
-    quad( 2,  0, 16, 18);
-    quad( 8,  2, 18, 24);
-    quad(14,  8, 24, 30);
+    quad(17,  1,  3, 19);
+    quad(25,  9, 15, 31);
+    quad(18,  2,  0, 16);
+    quad(24,  8,  2, 18);
+    quad(30, 14,  8, 24);
 }
 function quad(a, b, c, d) { // Vertices must be provided in clockwise order
     // Find normal vector to plane
